@@ -63,10 +63,10 @@ optimized in future work. We also looked into whether users incorporate
 personal data, such as lyrics specifically from a band they enjoy, but we have
 not found this to be the common case.
 
-Labrande\cite{crackmeimfamous} attempted to crack hashes from the Korelogic
+Labrande\cite{crackmeimfamous} attempted to crack hashes from the KoreLogic
 dump (139 million entries) used a compilation of different public sources.
 Around 4.3 million passwords were cracked, of which 200 000 are 16 characters
-or longer. Public sources include quotes from WikiQuote and text written in
+or longer. Public sources include quotes from Wikiquote and text written in
 bold and italics on Wikipedia.
 
 To summarize, the problem of cracking passphrases is generally approached by
@@ -79,20 +79,19 @@ set and using those to derive phrases which are likely to be logical.
 Our main research question is: {\it How can software efficiently generate
 likely passphrases, to be used in passphrase cracking?}
 
-To achieve this, we will use a probabilistic method which generates phrases in
-decreasing likelihood. Which method to use, is part of the research. An
-important factor in this design is the speed at which it can do this: most
-methods are not designed to iteratively list all possibilities in decreasing
-likelihood, which makes it difficult to do so using methods such as
-context-free grammar (as described by Weir\cite{probabilistic-thesis}, p.
-84--85).
+To achieve this, we will use a probabilistic method. Which method to use is
+part of the research. An important factor in this design is the speed at which
+it can do this: most methods are not designed to find all possibilities in
+order of decreasing likelihood, which makes it difficult to do so using methods
+such as context-free grammar (as described by Weir\cite{probabilistic-thesis},
+p. 84--85).
 
 From this follow more questions to answer our main question:
 
 \begin{enumerate}
 	\item Which probabilistic methods can be used to generate output in decreasing order of likelihood?
-	\item Which probabilistic method produces the most likely passphrases?
-	\item How much data, both in terms of storage and random access memory, does this method require?
+	\item Which probabilistic methods produce realistic passphrases?
+	\item How much data, both in terms of storage and random access memory, does the chosen method require?
 \end{enumerate}
 
 Our questions focus on probabilistic methods because those do not require users
@@ -105,6 +104,10 @@ grammar and neural networks. These methods have been applied to password
 cracking in the past, and might be applied to passphrases as well. Markov
 chains is one example which has also been applied to
 passphrases\cite{sparell-simovits} with good results.
+
+Due to the limited time, we will evaluate the possible approaches briefly and
+choose a method early on. The complete prototype will be built for only one of
+the possible methods.
 
 
 \section{Scope}
@@ -130,6 +133,7 @@ For software, we expect to use only free and open source products. We will also
 publish our product as free and open source software.
 
 
+\newpage
 \section{Ethical Considerations}
 
 In this investigation, we will need to evaluate the prototype. We will do this

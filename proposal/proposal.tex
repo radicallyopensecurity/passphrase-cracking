@@ -22,25 +22,14 @@
 
 \section{Introduction}
 
-Most of user data is password protected, but the choice of these passwords is
-largely left to users. Password recommendations propose using hard-to-remember
-patterns in order to make it harder to guess, while in reality many of those
-`random' tweaks (such as a number or exclamation mark at the end) are easily
-iterable by a computer.
-
-Using passphrases, users can approach the problem differently: form a string of
+Requirements for secure passwords are getting more and more stringent. Using
+passphrases, users can approach the problem differently: form a string of
 random, common words. The most famous example is `correct horse battery
 staple': four words with no coherence, but many people in the field can recall
 this phrase without ever trying to memorize it\cite{own}. Studies also show
 that users have fewer difficulties when memorizing a passphrase than when
 memorizing equally-strong random
 passwords\cite{behavioral-analysis}\cite{pwd-memorability}.
-
-Labrande\cite{crackmeimfamous} showed that at least 4 million in a set of 139
-million passwords (2.9\%) consist of phrases from publicly available sources.
-The exact percentage of passphrases used as passwords is not known, but this
-shows they are used by a lof of users while they have been studied relatively
-little.
 
 Password cracking tools are widely available, which help us understand the
 strength of them. For passphrases, there is no commonly used approach using a
@@ -91,11 +80,12 @@ Our main research question is: {\it How can software efficiently generate
 likely passphrases, to be used in passphrase cracking?}
 
 To achieve this, we will use a probabilistic method which generates phrases in
-decreasing likelihood. An important factor in this design is the speed at which
-it can do this: most methods are not designed to iteratively list all
-possibilities in decreasing likelihood, which makes it difficult to do so using
-methods such as context-free grammar (as described by
-Weir\cite{probabilistic-thesis}, p. 84--85).
+decreasing likelihood. Which method to use, is part of the research. An
+important factor in this design is the speed at which it can do this: most
+methods are not designed to iteratively list all possibilities in decreasing
+likelihood, which makes it difficult to do so using methods such as
+context-free grammar (as described by Weir\cite{probabilistic-thesis}, p.
+84--85).
 
 From this follow more questions to answer our main question:
 
@@ -110,6 +100,12 @@ to download or even compile large lists of passphrases to use directly.
 Instead, a model can be made available which contains probabilities for a
 certain language.
 
+Possible probabilistic approaches are Markov chains, weighted context-free
+grammar and neural networks. These methods have been applied to password
+cracking in the past, and might be applied to passphrases as well. Markov
+chains is one example which has also been applied to
+passphrases\cite{sparell-simovits} with good results.
+
 
 \section{Scope}
 
@@ -120,8 +116,7 @@ itself, since that functionality can well be provided by other software.
 
 The software will work for a general population and cannot be primed with facts
 such as birth dates of specific users. In our previous work\cite{own}, we found
-this to be not as effective as expected. It seems better to focus on the
-general method in this limited-time project.
+this to be not very effective in passphrases.
 
 
 \section{Requirements}
@@ -131,7 +126,8 @@ medium-sized dataset to operate. We estimate that a system with 4GiB RAM and
 10GiB persistent storage is required. This is supplied by Radically Open
 Security.
 
-For software, we expect to use only free and open source products.
+For software, we expect to use only free and open source products. We will also
+publish our product as free and open source software.
 
 
 \section{Ethical Considerations}
@@ -156,3 +152,4 @@ thereof) and how frequently it occurred in the dataset.
 \printbibliography
 
 \end{document}
+

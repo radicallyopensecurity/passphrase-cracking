@@ -1,4 +1,5 @@
 texfile = paper
+bibfile = references.bib
 
 build:
 	pdflatex -interaction=nonstopmode $(texfile).tex
@@ -29,7 +30,7 @@ once:
 	pdflatex -interaction=nonstopmode $(texfile).tex
 
 buildOnChange:
-	while :; do inotifywait $(texfile).tex; make once; done
+	while :; do inotifywait $(texfile).tex $(bibfile); make once; done
 
 boc: buildOnChange
 

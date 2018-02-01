@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-ssh -p 1111 rosbot@radical.sexy "crackphrase '$@'"
-

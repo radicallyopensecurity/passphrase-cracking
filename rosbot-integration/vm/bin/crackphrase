@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+
+import sys, os
+
+tmpfolder = '/tmp/'
+rosbotfolder = '/home/rosbot'
+hashcatfolder = 'hashcat/'
+
+dictfile = 'dict-wikiphrases'
+lockfile = tmpfolder + 'crackphrase_lock'
+hashfile = tmpfolder + 'crackphrase_hashes'
+stdout = tmpfolder + 'stdout'
+stderr = tmpfolder + 'stderr'
+
+hashcatcmd = (('{hcfolder}hashcat -m [HASHTYPE] -r hashcat-ruleset-1 -r hashcat-ruleset-2 '
+	+ '-r hashcat-ruleset-3 {hashfile} {dict} > {stdout} 2> {stderr}')
+	.format(hashfile=hashfile, stdout=stdout, stderr=stderr, dict=dictfile, hcfolder=hashcatfolder))
+
+os.chdir(rosbotfolder)
+
+cmd = sys.argv[1].strip().split(' ')
+
+# Strip "rosbot crackphrase" or "@rosbot crackphrase"
+cmd = cmd[2:]
+
+if 'stdout' in cmd or 'stderr' in cmd:
+	file = stdout if 'stdout' in cmd else stderr
+	with open(file) as f:
+		print(f.read().replace('\n', '\\n'))
+
+	exit(0)
+
+if 'unlock' in cmd:
+	if os.path.isfile(lockfile):
+		os.unlink(lockfile)
+		print('Removed lockfile.')
+		exit(0)
+	else:
+		print('Lockfile not found.')
+		exit(2)
+
+if 'help' in cmd or len(cmd) < 2 or not cmd[0].isdigit():
+	# TODO newlines don't work in output
+	print('Usage: "crackphrase <hashtype> <hash ...>". '
+		+ 'Hashtypes are identical to hashcat\'s (numeric). '
+		+ '0 is MD5, 100 is SHA1, etc. Hash is in hex format. '
+		+ 'Example: crackphrase 0 aab47yourhashff0 cb47another990c. '
+		+ 'N.B. You can use unlock, stdout or stderr for debugging, '
+		+ 'e.g. "rosbot crackphrase unlock')
+	exit(1)
+
+if os.path.isfile(lockfile):
+	print('Hashcat is already running (lock file found). Please try again later.')
+	exit(3)
+
+hashlist = '\n'.join(cmd[1:])
+hashtype = int(cmd[0])
+
+with open(hashfile, 'w') as f:
+	f.write(hashlist)
+
+open(lockfile, 'w').close()  # Creates the lockfile
+
+try:
+	os.system(hashcatcmd.replace('[HASHTYPE]', str(hashtype)))
+	# os.system() waits for it to return/finish/close/exit/...
+	if not os.path.isfile(hashcatfolder + 'hashcat.potfile'):
+		print('Hashcat ran but did not generate a results file. Probably some error. Check stderr or stdout.')
+	else:
+		f = open(hashcatfolder + 'hashcat.potfile', 'rt')  # Read text so we don't have to convert
+		results = f.read().replace('\n', ' ')  # TODO newlines don't work in output, so we have to replace
+		f.close()
+		os.unlink(hashcatfolder + 'hashcat.potfile')
+		print("Finished! Results: " + results)
+finally:
+	os.unlink(lockfile)
+

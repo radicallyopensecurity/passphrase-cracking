@@ -22,17 +22,29 @@
 
 \section*{Abstract}
 
-% TODO: write abstract
+Passphrases are an alternative to passwords that are supposed to be easier to
+remember for users. For passwords, cracking tools are widely available, helping
+us understand their strengths and weaknesses. For passphrase cracking, there is
+currently no common approach which is universally seen as the most effective
+way.
 
+In this work, we attempted to find and implement the most effective method. We
+compared Markov chains, n-grams and a hybrid dictionary attack. The latter was
+found to be most effective, both in terms of efficiency and the number of
+results. Excluding the time required to build the dictionary from English
+Wikipedia and Wikiquote articles, it took only 10 minutes to crack over 2.3
+million unique passphrases by using a hybrid dictionary attack with hashcat.
+Future users could download such a dictionary without having to compile it
+manually from various sources.
+
+\newpage
 
 \section{Introduction}
 
-% TODO: check section
-
 Requirements for secure passwords are getting more and more stringent to stay
 ahead of the increase in computational capacity of commonly accessible systems.
-Using passphrases, users can approach the problem differently: form a string of
-random, common words, instead of a complex sequence of characters. The most
+Using passphrases, users can approach the problem differently: instead of a
+complex sequence of characters, form a string of random, common words. The most
 famous example is `correct horse battery staple': four words with no coherence,
 but many people in the field can recall this phrase without ever trying to
 memorize it\cite{own}. Studies also show that users have fewer difficulties
@@ -40,15 +52,9 @@ when memorizing a passphrase than when memorizing equally-strong random
 passwords\cite{behavioral-analysis}\cite{pwd-memorability}.
 
 Password cracking tools are widely available, which help us understand the
-strength of them. For passphrases, there is no commonly used approach using a
-single tool or dataset, probably because there are very few of them.
-
-In this work, we will attempt to create a program which generates likely
-passphrases. It can be used in combination with traditional tools such as
-Hashcat or John the Ripper. We will use a probabilistic method to create
-realistic sentences and use rulesets of the traditional tool to do additional
-manipulation such as uppercasing the first word, removing spaces, and other
-operations that can be done using the optimized code of that tool.
+strength (or weakness) of passwords. For passphrases, there is no commonly used
+approach using a single tool or dataset, probably because there are very few of
+them.
 
 In the next section, we will explore the state of the field. Section
 \ref{sec:problemstatement}, Problem Statement, describes our expected
@@ -68,7 +74,7 @@ program by using Markov chains on a word level. Markov chains are used in many
 applications, such as next word prediction in keyboards on smartphones.
 Similarly, one can use them to approximate the next most likely word in a
 passphrase given a few starting words (which could be a dictionary walk). In
-Sparell and Simovits' work, the LinkedIn hashdump of 2012 was used as one of
+Sparell and Simovits' work, the LinkedIn hash dump of 2012 was used as one of
 the test sets. This contains mostly passwords (not phrases), but is still
 frequently used due to its large size of 64 million hashes. Of these, 21 000
 phrases were cracked of between 10 and 20 characters in length.
@@ -82,9 +88,9 @@ personal data, such as lyrics specifically from a band they enjoy, but we have
 not found this to be the common case.
 
 Labrande\cite{crackmeimfamous} attempted to crack hashes from the Korelogic
-dump (139 million entries) used a compilation of different public sources.
+dump (139 million MD5 entries) used a compilation of different public sources.
 Around 4.3 million passwords were cracked, of which 200 000 are 16 characters
-or longer. Public sources include quotes from WikiQuote and text written in
+or longer. Public sources include quotes from Wikiquote and text written in
 bold and italics on Wikipedia.
 
 Bonneau and Shutova\cite{payphrase-properties} examined ,,patterns of human
@@ -95,7 +101,7 @@ another user.'' This system allows passphrases as short as two words and
 offered no explanation to users regarding what might be secure. Its interface
 merely asks for a "phrase" (which is generally a string of {\it logical} words)
 and even suggests two-word phrases to use. The conclusion drawn by this paper
-is not surprising, given these circumstances: ,,users aren’t able to choose
+is not surprising, given these circumstances: ,,users aren't able to choose
 phrases made of completely random words, but are influenced by the probability
 of a phrase occurring in natural language. Examining the surprisingly weak
 distribution of phrases in natural language, we can conclude that even 4-word
@@ -107,9 +113,9 @@ Weir\cite{weir} examined probabilistic methods for password cracking,
 specifically Markov chains and probabilistic context-free grammar. Such
 techniques might also be applied to passphrases. Besides examining different
 methods, they also created an implementation using probabilistic context-free
-grammar. This method cracked more passwords than John the Ripper (JtR), when
-JtR is used in dictionary mode with the default word-mangling rules. It appears
-that this method is well-suited for password cracking.
+grammar. This method cracked more passwords than John the Ripper in dictionary
+mode with the default word-mangling rules. It appears that this method is
+well-suited for password cracking.
 
 
 \section{Problem Statement}\label{sec:problemstatement}
@@ -117,29 +123,32 @@ that this method is well-suited for password cracking.
 Our main research question is: {\it How can software efficiently generate
 likely passphrases, to be used in passphrase cracking?}
 
-To achieve this, we will use a probabilistic method which generates phrases.
-Which specific method to use, is part of this research. Probabilistic methods
-can account for linguistic properties of phrases. It also allows users to
-download a model, rather than a large list of (people's private) passphrases to
-use directly. See section \ref{sec:methods-comparison} for a comparison of
-possible methods.
+To achieve this, we will use a probabilistic method which generates realistic
+phrases. Which specific method to use, is part of this research. We want to use
+a probabilistic method because they can account for linguistic properties of
+phrases. It also allows users to download a model, rather than a large list of
+phrases to use directly. In section \ref{sec:methods-comparison} we compare
+different methods.
+
+Our implementation will be used in combination with traditional password
+cracking tools such as Hashcat or John the Ripper, because those have fast
+implementations of hash functions and other helpful features. One such feature
+is rule sets, which we will use for generating variants of phrases to be tried.
+These rule languages can perform simple manipulations such as lowercasing each
+word, removing spaces, or appending an exclamation mark.
 
 Probabilistic methods require a dataset to be trained on. Because very few
 systems use passphrases exclusively, there are no lists of commonly used
 passphrases like there are for passwords. We will attempt to reproduce
 Labrande's research\cite{crackmeimfamous} in order to create such a set. The
-result of this attempt is described in section \ref{sec:dataset}.
-
-We have also downloaded a large plaintext password dump, specifically the
-"breach compilation" of 1.4 billion passwords, but this proved to mainly many
-very insecure passwords and did not contain more than a few passphrases.
+result of this attempt is described in the next section.
 
 
 \section{Passphrase Dataset}\label{sec:dataset}
 
-In order to train a probabilistic algorithm, a dataset is needed to train with.
-Labrande\cite{crackmeimfamous} described cracking over 4 million entries from
-the Korelogic\cite{korelogic} MD5 dataset, 200 000 of which are 16 or more
+In order to train a probabilistic algorithm, a dataset is needed to train on.
+Labrande described cracking over 4 million entries from the
+Korelogic\cite{korelogic} MD5 dataset, 200 000 of which are 16 or more
 characters. This was done by downloading all articles of Wikipedia and
 Wikiquote in various languages, plus a few other, smaller sources. Page titles,
 list item entries, bold text, and italic text were used as phrases. Finally,
@@ -147,38 +156,33 @@ they used rules in John the Ripper to test variants of each phrase. They also
 used rules which mangle the phrase into a password, for example by taking only
 the first letter of each word in the phrase.
 
+We classify this attack as a hybrid dictionary attack, because of the
+similarity to traditional hybrid dictionary attacks on passwords. In suchs
+attacks, a large list of words is used together with mangling rules to generate
+possible permutations. In Labrande's variant, phrases are used instead of
+words, using a smart method of selecting likely phrases.
+
 Because we are mainly interested in English passphrases, we downloaded only the
 English Wikipedia and Wikiquote articles. For a set of hashes, we used the
 LinkedIn as well as the Korelogic dump. This also provides a way of comparing
 results with Sparell and Simovits'\cite{sparell-simovits} Markov chain-based
-method, which they tested on the LinkedIn set. We processed the list in a
+method, which they tested on the LinkedIn set. We processed the data in a
 similar manner: extracting text in italics and bold, page titles, and list
 items on Wikiquote. We used only a few phrase mangling rules, which are
 described in section \ref{sec:implementation}. Since we are, at this point,
-strictly interested in passphrases, we did not include many of the more
-elaborate rules: rules such as taking the first letter of each word, or
-appending random numbers, were not used. These defeat the purpose of a
-passphrase, which is to be a set of common words with no punctuation or other
-random tweaks to remember.
+only interested in passphrases, we did not include many of the more elaborate
+rules: rules such as taking the first letter of each word or appending random
+numbers, were not used. Such random variations would defeat the purpose of a
+passphrase for the user, which is to be a set of common words with no
+punctuation or other random tweaks to remember.
 
-Labrande described the cracking process took a few weeks on "an outdated laptop
-with a 2GHz processor", processing around 65 million unique entries in the
-phrase dictionary. We extracted around 26 million unique entries, for a total
-size of 690MiB. The difference in number of entries can be explained by the
-fact that we did not download other languages. Processing these 38 million
-entries, including the mangling rules, took around 10 minutes using Hashcat on
-an Intel Core i7-3630QM.
+The results of this effort are described in section \ref{sub:dataset-results}
+(evaluation of the hybrid dictionary attack).
 
-From the LinkedIn set, this yielded 1.3 million results, of which 13 361 of 16
-characters or longer. 26 345 cracked passwords include at least one space,
-meaning they are probably passphrase-like even if they are shorter than sixteen
-characters. In previous work\cite{own} we found that only about half the users
-left spaces intact in passphrases, a number that is probably lower in a set
-where users were not specifically queried about passphrases.
-
-From the Korelogic MD5 set, we cracked 2.3 million hashes in 20 minutes, using
-the same list of phrases and mangling rules. 146 742 were 16 characters or
-longer and 311 815 included a space.
+Additionally, we have downloaded a large plain text password dump, specifically
+the `breach compilation' of 1.4 billion passwords. This proved to mainly
+consist of very insecure passwords and did not contain more than a few
+passphrases.
 
 
 \section{Probabilistic Method Selection}\label{sec:methods-comparison}
@@ -212,7 +216,7 @@ We evaluated the possibility of adding conjugations and plurals in some way, at
 least for the most common words, but this quickly proved to be too large a task
 to fit within the scope of this project.
 
-While analysing the dataset, we saw that it contained many geographical names,
+While analyzing the dataset, we saw that it contained many geographical names,
 brands and person's names. Additionally, many of the phrases have the ring of a
 catchphrase to them or form a common saying, for example "eye for an eye" or
 "give me a break". While a probabilistic context-free grammar model might be
@@ -246,20 +250,20 @@ code for these programs can be found in our git repository\cite{git}. The
 output of the second program can be directly used in tools such as Hashcat.
 
 The generator can make arbitrarily long phrases, as long as it can find a
-possible continuation in the n-gram file (which is usually infinite because of
-repetitions). The maximum length is therefore configurable. A logical value is
-around eight to ten words: this is not long enough to output too many
-repetitions while still generating fairly long phrases.
+possible continuation in the n-gram file (which is typically infinite because
+of repetitions). The maximum length is therefore configurable. A logical value
+is around eight words: this does not output too many illogical repetitions
+while still generating fairly long phrases.
 
 A bigrams file was initially generated from the passphrases we cracked in
 section \ref{sec:dataset}. This yielded only 761 bigrams and 331 trigrams
-because most passphrases are stripped of spaces. We attempted to use the
-program which we used in section \ref{sec:methods-comparison} to find
-concatenated words within phrases, splitting `batterystaple' into `battery' and
-`staple'. Again we found that the identification errors were too great to be of
-any use, even when using an additional dictionary\cite{wamerican} which
-contains conjugations. (This additional dictionary was not used initially
-because it does not have word type classifications.)
+because most users stripped their passphrases of spaces. We attempted to use
+the program which we used in section \ref{sec:methods-comparison} to find
+concatenated words within phrases, splitting e.g. `batterystaple' into
+`battery' and `staple'. Again we found that the identification errors were too
+great to be of any use, even when using an additional
+dictionary\cite{wamerican} which contains conjugations. (This dictionary was
+not used initially because it does not have word type classifications.)
 
 In order to supplement the system with more possible sentence continuations, we
 used English Wikipedia articles. This yielded around 29 million bigrams and 47
@@ -268,21 +272,207 @@ passphrases, prioritizing the latter. This way, n-grams from Wikipedia are only
 used supplementarily and n-grams from previously cracked passphrases are
 tried first.
 
+Finally, we used mangling rules in Hashcat to create simple variants for each
+phrase. Hashcat can use multiple rule sets which are then combined, for example
+if in set 1 there are rules for both lowercasing and uppercasing a phrase and
+in set 2 there are rules for removing spaces, the resulting phrases for `A b'
+will be `a b', `A B', `ab' and `AB'. In our previous work, we learned what kind
+of alterations users make to their phrases. Based on that information, we
+created three sets of rules:
+
+\begin{enumerate}
+	\item \begin{itemize}
+		\item use as-is
+		\item lowercase all characters
+		\item capitalize the first letter, lowercase the rest
+		\item capitalize the first letter of each word, lowercase the rest (titlecase)
+	\end{itemize}
+
+	\item \begin{itemize}
+		\item use as-is
+		\item append a period
+		\item append an exclamation mark
+		\item append a question mark
+	\end{itemize}
+
+	\item \begin{itemize}
+		\item use as-is
+		\item remove all spaces
+	\end{itemize}
+\end{enumerate}
+
+These rules create 32 variants for each input.
+
+The system we used for all tests is a laptop with an Intel i7-3630QM CPU and
+8GiB RAM.
+
 
 \section{Evaluation}\label{sec:eval}
 
+In this section we will evaluate the performance of different passphrase
+cracking methods, as well as our n-gram implementation. We consider the number
+of entries they manage to crack as well as their efficiency.
 
+Because we reproduced Labrande's hybrid dictionary attack (with slight
+alterations) and cracked a set of hashes identical to those of Sparell and
+Simovits'\cite{sparell-simovits}, we can compare the performance of all methods
+directly.
+
+
+\subsection{Hybrid dictionary}\label{sub:dataset-results}
+
+Using the hybrid dictionary attack as described by Labrande (with slight
+alterations), we cracked 2.3 million hashes from the Korelogic MD5 set. 146 742
+were 16 characters or more. 311 815 included at least one space, meaning they
+are probably passphrase-like even if they are shorter than sixteen characters.
+
+This is only half as many as Labrande cracked: 4.2 million and 200 000 of 16
+characters or more (there are no statistics on the number of cracked entries
+with spaces). This difference could be explained by the fact that we were
+strictly after English passphrases and did not use a large number of mangling
+rules, and because we did not include other languages. Labrande used the
+English, German, French, Italian and Spanish versions of Wikipedia and
+Wikiquote.
+
+Note that in previous work\cite{own}, we found that only about half the users
+left spaces intact in passphrases. This number is probably even lower in a set
+where users were not specifically queried about passphrases. The number of
+passphrase-like entries probably more than twice as high as the number of
+entries we found with spaces.
+
+Of the LinkedIn set, we were able to crack 1.3 million entries, of which 13 361
+of 16 characters or more and 26 345 cracked passwords include a space.
+
+\subsubsection{Efficiency}
+
+Labrande's hybrid dictionary attack took ,,a few weeks on an outdated laptop
+with a 2GHz processor,'' using John the Ripper. When reproducing this attack,
+the process took around 10 minutes in Hashcat. Our dictionary was smaller (26
+million instead of 65 million entries) and used fewer mangling rules, which
+could explain the difference. Despite those limits, we still cracked half as
+many entries as Labrande. Despite the more than 2000-fold decrease in time, it
+still yielded good results.
+
+The storage requirements of this method are relatively large: our phrases
+file (with 26 million entries) is 690MiB. Since we had to generate this from
+Wikipedia, we also had to download all Wikipedia and Wikiquote articles, which
+are 26GiB as download and 135GiB uncompressed.
+
+Memory usage is not relevant for this attack, as each line can be read off of
+disk and is immediately passed onto Hashcat.
+
+
+\subsection{Markov chains}
+
+Sparell and Simovits cracked 25 000 entries from the LinkedIn set, of which 384
+of 16 characters or longer.
+
+\subsubsection{Efficiency}
+
+Sparell and Simovits described that generating phrases is the dominant part of
+the time consumption for their cracking process. They therefore wrote the
+output of their phrase generator to a file before inputting it into Hashcat,
+classifying files by different sources and passphrase lengths. Generation times
+differ from 16 minutes for a 2.6 million 10-character phrases file to 960 hours
+(40 days) for 8.5 billion 20-character phrases. The numbers in terms of phrases
+per second vary greatly, ranging from 22 500 to 2 459 phrases per second.
+
+The size of the source files, which form the Markov model, is not described;
+nor is the amount of RAM required for this method.
+
+
+\subsection{N-grams}
+
+% TODO: word choice (global): entries or records? Or something else?
+
+Using our passphrase generator with trigrams, we were able to crack 835 562
+entries of the Korelogic MD5 set, of which 32 911 are 16 characters or longer,
+and 70 198 contain a space. Of the LinkedIn set, we were able to crack 482 014
+entries, of which 3 782 are 16 characters or longer and 14 903 contain a space.
+
+Using bigrams, we were able to crack 342 145 entries of the Korelogic set, of
+which 9 148 are 16 characters or longer and 1 023 contain a space. Of the
+LinkedIn set, we were able to crack 190 117 entries, of which 1 468 are 16
+characters or longer and 1 449 contain a space.
+
+Both attacks produced a great number of short results, such as `thefault' or
+`wanderers'. After going through all phrases shorter than or equal to {\it n}
+words, the number of results dropped significantly.
+
+\subsubsection{Efficiency}
+
+The n-gram phrase generator first loads the data, which takes a few minutes and
+scales linearly with the n-gram file size. While running, it generates two to
+four million phrases per second on a single CPU core (the median is 3.3 million
+phrases per second). This saturated Hashcat's ability to process input: hashcat
+processes around ten million SHA-1 hashes per second, but applies a few rules.
+Since rules easily generate many more than three variants per phrase, the speed
+of our program is sufficient despite running on only a single core and being
+written in Python, an interpreted language.
+
+Memory usage for the generation process depends on the number of n-grams
+loaded: for 22 million trigrams (464MiB), it uses 5.3GiB of RAM. This is quite
+intensive, but required for fast lookups. Bigrams are much more efficient:
+because there are fewer combinations to be made, the input files are much
+smaller. The complete bigrams file contains 2.9 million entries (47MiB) and
+uses 800MiB RAM.
+
+A file with trigrams of 464MiB is not much smaller than our Wikipedia and
+Wikiquote phrase dictionary of 690MiB. Bigrams are more efficient, using 47MiB.
 
 
 \section{Conclusions}\label{sec:conclusions}
 
-% TODO: compare Labrande's method with SparellSimovits' method (1.3M results of ours vs 20.5k of SS,
-%   or 13k (ours) of 16+ chars vs 384 of SS.
+We have explored and compared different methods for passphrase cracking,
+confirmed the results of Labrande's hybrid dictionary attack, and implemented a
+new method based on n-grams. Our conclusion is that the most effective attack
+at this time is the hybrid dictionary attack, even when considering the
+trade-off between storage requirements and practicality versus the number of
+results obtained. While the dictionary does need a relatively large amount of
+storage, particularly when generating or updating it, it is extremely efficient
+in terms of RAM and CPU.
+
+N-grams are less effective than expected. The most effective part of the
+cracking process were the phrases of {\it n} words or fewer, corresponding to
+the order of the n-gram. This means that literal hits were much more common
+than hits of combined n-grams, indirectly confirming again how powerful the
+dictionary attack is. It also indicates that passphrases are generally not
+normal, full sentences: despite training the model on both previously cracked
+passphrases and all English Wikipedia articles, sentences generated from those
+n-grams do not yield many results.
+
+Markov chains, as described by Sparell and Simovits, yielded the fewest results
+of the three methods we compared. Generating the passphrases was also slower
+than by using n-grams or a dictionary, probably because the algorithm for
+Markov chains is more complex.
+
+The source code for our software is available on Github\cite{git} under GPL
+version 3.0.
 
 
 \section{Future work}\label{sec:futurework}
 
+We have not been able to explore probabilistic context-free grammar fully due
+to the difficulties in classifying words. Weir was successful in this with
+passwords because he focused on a character level. For passphrases, which are
+composed of words instead of characters, this method is more complex. We
+recommend looking into other, possibly commercial options for a word
+classification database. We also do not recommend using previously cracked
+passphrases as training set: many are stripped of spaces, making it very
+difficult to programmatically split words for classification.
 
+Our n-gram attack can be improved in various ways. It might be more effective
+to store which n-grams were the start of a sentence. In our version, it would
+take an n-gram and append other, matching n-grams to complete the phrase.
+However, if the starting n-gram is not a logical way to start a sentence, all
+generated continuations are wasted. It would also be more memory- and
+storage-efficient to use a language with less memory overhead, and to identify
+words by tokens instead of indexing literal n-grams.
+
+Finally, we are curious how neural networks would perform for this purpose.
+Training a model is typically computationally intensive, but general purpose
+frameworks are available which make it easy to run such computations on a GPU
+and generate fairly large models on modest hardware.
 
 
 \printbibliography

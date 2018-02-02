@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env pypy
 
 import sys
 
@@ -7,7 +7,7 @@ if '-h' in sys.argv or '--help' in sys.argv or len(sys.argv) == 1:
 '''Usage:
     combiner.py <n> <inf|min max> [-b <bonus>] <file ...>
 
-Combines n-gram files. Recommended to be run with pypy for speed.
+Combines n-gram files. Outputs to stdout.
 
 Arguments:
   <n>
@@ -33,14 +33,16 @@ Arguments:
 
 # Used to merge cracked passphrase ngrams and wikipedia based ngrams
 
+bonus = 0
+if '-b' in sys.argv:
+    i = sys.argv.index('-b')
+    bonus = int(sys.argv[i + 1])
+    sys.stderr.write('Applying bonus {} to first file\n'.format(bonus))
+    del sys.argv[i]
+    del sys.argv[i]  # Not i+1 because it shifted
+
 n = int(sys.argv[1])
 sys.argv = sys.argv[1:]
-
-bonus = 0
-if sys.argv[1] == '-b':
-    bonus = int(sys.argv[2])
-    sys.stderr.write('Applying bonus {} to first file\n'.format(bonus))
-    sys.argv = sys.argv[2:]
 
 if sys.argv[1] != 'inf':
     processrange = (int(sys.argv[1]), int(sys.argv[2]))

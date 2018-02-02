@@ -26,7 +26,10 @@ cmd = cmd[2:]
 if 'stdout' in cmd or 'stderr' in cmd:
 	file = stdout if 'stdout' in cmd else stderr
 	with open(file) as f:
-		print(f.read().replace('\n', '\\n'))
+		data = f.read().strip()
+		if len(data) > 4900:
+			print('Warning: output is >4900 bytes. Showing the first and last 2350 bytes.')
+		print(data[:2350] + '\n\n~~~~~~ snip ~~~~~~\n\n' + data[-2350:])
 
 	exit(0)
 
@@ -40,13 +43,12 @@ if 'unlock' in cmd:
 		exit(2)
 
 if 'help' in cmd or len(cmd) < 2 or not cmd[0].isdigit():
-	# TODO newlines don't work in output
-	print('Usage: "crackphrase <hashtype> <hash ...>". '
-		+ 'Hashtypes are identical to hashcat\'s (numeric). '
-		+ '0 is MD5, 100 is SHA1, etc. Hash is in hex format. '
-		+ 'Example: crackphrase 0 aab47yourhashff0 cb47another990c. '
-		+ 'N.B. You can use unlock, stdout or stderr for debugging, '
-		+ 'e.g. "rosbot crackphrase unlock')
+	print('Usage: `crackphrase <hashtype> <hash ...>`.')
+	print('Hashtypes are identical to hashcat\'s (numeric): '
+		+ '0 is MD5, 100 is SHA1, etc. The hash(es) is/are in hex format.')
+	print('Example: `crackphrase 0 aab47yourhashff0 c1ffanother990c`.')
+	print('N.B. You can use unlock, stdout or stderr for debugging, '
+		+ 'e.g. `rosbot crackphrase unlock`.')
 	exit(1)
 
 if os.path.isfile(lockfile):
@@ -68,10 +70,12 @@ try:
 		print('Hashcat ran but did not generate a results file. Probably some error. Check stderr or stdout.')
 	else:
 		f = open(hashcatfolder + 'hashcat.potfile', 'rt')  # Read text so we don't have to convert
-		results = f.read().replace('\n', ' ')  # TODO newlines don't work in output, so we have to replace
+		results = f.read()
+		if len(results.strip()) == 0:
+			print("Finished cracking! There are no results.")
+		else:
+			print("Finished cracking! Results: " + results)
 		f.close()
 		os.unlink(hashcatfolder + 'hashcat.potfile')
-		print("Finished! Results: " + results)
 finally:
 	os.unlink(lockfile)
-

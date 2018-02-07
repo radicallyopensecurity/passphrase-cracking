@@ -30,7 +30,7 @@ compared Markov chains, n-grams and a hybrid dictionary attack. The latter was
 found to be most effective, both in terms of efficiency and the number of
 results. Excluding the time required to build the dictionary from English
 Wikipedia and Wikiquote articles, it took only 10 minutes to crack over 2.3
-million unique passphrases by using a hybrid dictionary attack with hashcat.
+million unique passphrases by using a hybrid dictionary attack with Hashcat.
 Future users could download such a dictionary without having to compile it
 manually from various sources.
 
@@ -157,7 +157,7 @@ used rules that mangle the phrase into a password, for example by taking only
 the first letter of each word in the phrase.
 
 We classify this attack as a hybrid dictionary attack, because of the
-similarity to traditional hybrid dictionary attacks on passwords. In suchs
+similarity to traditional hybrid dictionary attacks on passwords. In such
 attacks, a large list of words is used together with mangling rules to generate
 possible permutations. In Labrande's variant, phrases are used instead of
 words, using a smart method of selecting likely phrases.
@@ -385,8 +385,6 @@ nor is the amount of RAM required for this method.
 
 \subsection{N-grams}
 
-% TODO: word choice (global): entries or records? Or something else?
-
 Using the passphrase generator with trigrams, it was able to crack 835 562
 entries of the Korelogic MD5 set, of which 32 911 are 16 characters or longer,
 and 70 198 contain a space. Of the LinkedIn set, it was able to crack 482 014
@@ -406,7 +404,7 @@ words, the number of results dropped significantly.
 The n-gram phrase generator first loads the data, which takes a few minutes and
 scales linearly with the n-gram file size. While running, it generates two to
 four million phrases per second on a single CPU core (the median is 3.3 million
-phrases per second). This saturated Hashcat's ability to process input: hashcat
+phrases per second). This saturated Hashcat's ability to process input: Hashcat
 processes around ten million SHA-1 hashes per second, but applies a few rules.
 Since rules easily generate many more than three variants per phrase, the speed
 of our program is sufficient despite running on only a single core and being
